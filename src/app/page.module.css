@@ -17,6 +17,16 @@
   padding: 5rem 0;
 }
 
+.sampleCell {
+  display: flex;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  background: url('~/src/assets/images/icons.png') no-repeat;
+  border: 1px solid;
+  border-color: black;
+}
+
 .footer {
   display: flex;
   align-items: center;
