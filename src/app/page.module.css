@@ -56,3 +56,32 @@
 .row {
   display: flex;
 }
+
+.openedEmpty {
+  /* 新しいクラス名 */
+  cursor: default; /* 開かれたマスはクリック不可 */
+  border-top: 1px solid #808080;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  border-left: 1px solid #808080;
+
+  /* background-image: none; /* 空のマスの場合のみこれを適用する */
+}
+
+/* 開かれた「空の」マス (cellValue = 3 の場合) */
+
+/* .cell に .openedEmpty クラスがつき、かつ background-position が 'none' の場合 */
+
+/* JSX側で style={{ backgroundPosition: 'none' }} を渡すことを想定 */
+.cell.openedEmpty[style*='background-position: none'] {
+  background-image: none; /* 画像を非表示にする */
+}
+
+/* 開かれた「数字の」マス (background-positionが設定されている場合) */
+
+/* .cell に .openedEmpty クラスがつき、かつ background-position が設定されている場合 */
+.cell.openedEmpty:not([style*='background-position: none']) {
+  /* 数字の画像が表示されるので background-image: none; は不要 */
+
+  /* openedEmpty のボーダーと背景色が適用される */
+}

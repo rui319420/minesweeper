@@ -53,7 +53,14 @@ export default function Home() {
             {row.map((cell, colIndex) => (
               <div
                 key={`${rowIndex}-${colIndex}`}
-                className={`${styles.cell} ${cell === 3 ? styles.opened : ''}`} /* cellValueが3ならopenedクラスを適用 */
+                // ★★★ 修正箇所 ★★★
+                // cell === 3 の場合、styles.openedEmpty を適用する
+                // cell > 3 (数字のマス) の場合は、これも開いているので styles.openedEmpty を適用しつつ、
+                // backgroundPositionで数字の画像を表示させる
+                className={`${styles.cell} ${cell === 3 ? styles.openedEmpty : cell > 3 ? styles.openedEmpty : ''}`}
+                // または、シンプルに以下の形でOK
+                // className={`${styles.cell} ${cell === 3 || cell > 3 ? styles.openedEmpty : ''}`}
+                // cell > 3 は数字のマスを想定。数字のマスも openedEmpty と同じへこんだスタイルを適用する
                 style={
                   getBackgroundPosition(cell)
                     ? { backgroundPosition: getBackgroundPosition(cell) }
