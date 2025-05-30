@@ -2,58 +2,72 @@
 
 import { useState } from 'react';
 import styles from './page.module.css';
-const calcTotalPoint = (arr: number[], counter: number) => {
-  let i = 0;
-  for (const j of arr) {
-    i += j;
-  }
-  return i + counter;
-};
-const down = (n: number) => {
-  if (n !== -1) {
-    // console.log(n);
-    down(n - 1);
-  }
-};
-down(10);
-const sum1 = (n: number): number => {
-  if (n === 0) {
-    return n;
-  }
-  return n + sum1(n - 1);
-};
-// console.log(sum1(10));
 
-const sum2 = (k: number, l: number): number => {
-  return k === l ? k : k + sum2(k + 1, l);
-};
-// console.log(sum2(3, 10));
+const userInput: number[][] = [
+  [0, 0, 1, 3],
+  [3, 0, 2, 0],
+  [0, 0, 0, 3],
+  [0, 1, 3, 2],
+]; // 0:何もしない 1:旗 2:はてな 3:開く
 
-const sum3 = (p: number, q: number): number => {
-  return ((p + q) * (q - p + 1)) / 2;
+const bombMap: number[][] = [
+  [0, 0, 0, 1],
+  [0, 0, 0, 0],
+  [0, 1, 0, 0],
+  [0, 0, 0, 1],
+]; //0:何もない 1:爆弾がある
+
+const calcMap = (userInput: number[][], bombMap: number[][]) => {
+  return structuredClone(userInput);
 };
-console.log(sum3(4, 10));
+
 export default function Home() {
-  const [samplePoints, setSamplePoints] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-  // console.log(samplePoints);
-  const [sampleCounter, setSampleCounter] = useState(0);
-  // console.log(sampleCounter);
-  const clickHandler = () => {
-    const newSamplePoints = structuredClone(samplePoints);
-    newSamplePoints[sampleCounter] += 1;
-    setSamplePoints(newSamplePoints);
-    setSampleCounter((sampleCounter + 1) % 14);
+  const [board, setBoard] = useState(userInput);
+
+  const handleCellClick = (x: number, y: number) => {
+    const newBoard = structuredClone(board);
+    newBoard[y][x] = 3;
+    setBoard(newBoard);
   };
-  const TotalPoint = calcTotalPoint(samplePoints, sampleCounter);
-  // console.log(TotalPoint);
+  const getBackgroundPosition = (cellValue: number) => {
+    switch (cellValue) {
+      case 0: // 未開封
+        return '-30px -30px';
+      case 1: // 旗
+        return '-270px 0px';
+      case 2: // はてな
+        return '-240px 0px';
+      case 3: // 開いたセル
+        return '-210px 0px';
+      default:
+        return '0px 0px'; // デフォルト
+    }
+  };
 
   return (
     <div className={styles.container}>
-      <div
-        className={styles.sampleCell}
-        style={{ backgroundPosition: `${-30 * sampleCounter}px ` }}
-      />
-      <button onClick={clickHandler}>クリック</button>
+      <h1>マインスイーパー</h1>
+      <div className={styles.board}>
+        {board.map((row, rowIndex) => (
+          <div key={rowIndex} className={styles.row}>
+            {row.map((cell, colIndex) => (
+              <div
+                key={`${rowIndex}-${colIndex}`}
+                className={`${styles.cell} ${cell === 3 ? styles.opened : ''}`} /* cellValueが3ならopenedクラスを適用 */
+                style={
+                  getBackgroundPosition(cell)
+                    ? { backgroundPosition: getBackgroundPosition(cell) }
+                    : { backgroundPosition: 'none' }
+                }
+                onClick={() => handleCellClick(rowIndex, colIndex)} // rowIndex, colIndexを渡す
+                // x={rowIndex}
+                // y={cellIndex}
+                // value={cell}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
