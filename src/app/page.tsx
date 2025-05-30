@@ -3,35 +3,69 @@
 import { useState } from 'react';
 import styles from './page.module.css';
 
+const ROWS = 9;
+const COLS = 9;
+const NUM_BOMBS = 10;
+
 const userInput: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0) as number[]);
 // 0:何もしない 1:旗 2:はてな 3:開く
 
-const bombMap: number[][] = [
-  [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 1, 0, 0, 0],
-  [0, 0, 1, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 1, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 1, 0, 0, 0, 0, 0, 0],
-]; //0:何もない 1:爆弾がある
+const generateRandomBombMap = (rows: number, cols: number, numBombs: number): number[][] => {
+  const newBombMap: number[][] = Array.from({ length: rows }, () => Array<number>(cols).fill(0));
+  let placedBombs = 0;
+
+  while (placedBombs < numBombs) {
+    const y = Math.floor(Math.random() * rows); // 行 (y)
+    const x = Math.floor(Math.random() * cols); // 列 (x)
+
+    if (newBombMap[y][x] === 0) {
+      // そのマスにまだ爆弾がなければ
+      newBombMap[y][x] = 1; // 爆弾を配置
+      placedBombs++;
+    }
+  }
+  return newBombMap; // 生成した爆弾マップを返す
+};
+//0:何もない 1:爆弾がある
+
+const puttingBomb = (bombMap: number[][]) => {
+  const bombCount = 10; // 爆弾の数
+  let placedBombs = 0;
+
+  while (placedBombs < bombCount) {
+    const x = Math.floor(Math.random() * 9);
+    const y = Math.floor(Math.random() * 9);
+
+    if (bombMap[y][x] === 0) {
+      bombMap[y][x] = 1; // 爆弾を配置
+      placedBombs++;
+    }
+  }
+};
 
 const calcMap = (userInput: number[][], bombMap: number[][]) => {
   const board: number[][] = [];
-  for (let y = 0; y < userInput.length; y++) {
+  for (let y = 0; y < ROWS; y++) {
     const row: number[] = [];
-    for (let x = 0; x < userInput[y].length; x++) {
-      const cellValue = userInput[y][x];
-      if (cellValue === 3) {
-        row.push(3);
-      } else if (cellValue === 1) {
-        row.push(1);
-      } else if (cellValue === 2) {
-        row.push(2);
+    for (let x = 0; x < COLS; x++) {
+      const userAction = userInput[y][x];
+
+      if (userAction === 1) {
+        // 旗が置かれている場合
+        row.push(1); // 表示上も旗
+      } else if (userAction === 2) {
+        // はてなが置かれている場合
+        row.push(2); // 表示上もはてな
+      } else if (userAction === 3) {
+        // マスが開かれている場合
+        if (bombMap[y][x] === 1) {
+          row.push(99); // 爆弾がある場合は99 (表示用に特別な値)
+        } else {
+          row.push(3); // 開かれた空のマス (数字はまだ表示しない)
+        }
       } else {
-        row.push(0);
+        // 未開封の場合 (userAction === 0)
+        row.push(0); // 未開封として表示
       }
     }
     board.push(row);
@@ -41,42 +75,21 @@ const calcMap = (userInput: number[][], bombMap: number[][]) => {
 
 export default function Home() {
   const [userInputBoard, setUserInputBoard] = useState(userInput);
-  // 実際に表示する盤面を管理するステート (calcDisplayMapの結果)
-  // userInput と bombMap はファイル冒頭で定義されている定数
-  const initialDisplayBoard = calcMap(userInput, bombMap);
-  const [displayBoard, setDisplayBoard] = useState<number[][]>(initialDisplayBoard); // ここを修正
-  // ランダムなbombMapを状態として管理
-  const [currentBombMap, setCurrentBombMap] = useState<number[][]>([]);
+  const [bombMap] = useState<number[][]>(() => generateRandomBombMap(ROWS, COLS, NUM_BOMBS));
 
-  // // コンポーネントがマウントされたとき、またはゲームがリセットされたときにbombMapを生成
-  // useEffect(() => {
-  //   // 最初のレンダリング時のみbombMapを生成するようにする
-  //   if (currentBombMap.length === 0) {
-  //     // bombMapがまだ生成されていなければ
-  //     setCurrentBombMap(generateRandomBombMap(ROWS, COLS, NUM_BOMBS));
-  //   }
-  // }, []); // 空の依存配列なので、初回レンダリング時に一度だけ実行
-
+  const displayBoard = calcMap(userInputBoard, bombMap);
   const handleCellClick = (x: number, y: number) => {
-    if (userInput[x][y] === 3 || userInput[x][y] === 1 || userInput[x][y] === 2) {
+    if (userInputBoard[x][y] === 3 || userInputBoard[x][y] === 1 || userInputBoard[x][y] === 2) {
       return;
     }
-    const newUserInputBoard = structuredClone(userInputBoard);
-    newUserInputBoard[x][y] = 3; // セルを「開かれた」状態にする
-    setUserInputBoard(newUserInputBoard);
 
-    const newDisplayBoard = calcMap(newUserInputBoard, currentBombMap); // currentBombMapも使うように変更
-    setDisplayBoard(newDisplayBoard);
+    const newUserInputBoard = structuredClone(userInputBoard);
+    newUserInputBoard[x][y] = 3;
+    setUserInputBoard(newUserInputBoard);
   };
   // 右クリック（旗・はてなを切り替える）
   const handleCellRightClick = (event: React.MouseEvent, x: number, y: number) => {
-    event.preventDefault(); // デフォルトのコンテキストメニューをキャンセル
-
-    // 既に開かれているセルには反応しない
-    // 修正: userInputBoard[x][y] と displayBoard[x][y] を参照する
-    if (userInputBoard[x][y] === 3 || (displayBoard[x][y] >= 4 && displayBoard[x][y] <= 12)) {
-      return;
-    }
+    event.preventDefault();
 
     // 修正: userInput を参照するのではなく、userInputBoard ステートを複製して操作する
     const newUserInputBoard = structuredClone(userInputBoard);
@@ -103,6 +116,8 @@ export default function Home() {
         return '-240px 0px';
       case 3: // 開いたセル
         return '';
+      case 99: // 爆弾のマス
+        return '-300px 0px';
       default:
         return '0px 0px'; // デフォルト
     }
@@ -124,7 +139,9 @@ export default function Home() {
                   // openedEmpty クラスの適用条件を見直し
                   // cellValue が 3 (開かれた空のマス) または 4-12 (数字/爆弾マス) の場合に適用
                   className={`${styles.cell} ${
-                    cellValue === 3 || (cellValue >= 4 && cellValue <= 12) ? styles.openedEmpty : ''
+                    cellValue === 3 || cellValue === 99 // ここに || cellValue === 99 を追加
+                      ? styles.openedEmpty
+                      : ''
                   }`}
                   style={
                     // getBackgroundPositionが空文字列を返したらbackgroundPositionを'none'に設定
