@@ -13,8 +13,8 @@
   gap: 1px;
   align-items: center;
   justify-content: center;
-  width: 120px; /* 4 * 30px */
-  height: 120px; /* 4 * 30px */
+  width: 270px; /* 9 * 30px */
+  height: 270px; /* 4 * 30px */
   margin-top: 20px; /* 必要であれば、ボードの上にもう少し余白を追加 */
   margin-bottom: 20px; /* 必要であれば、ボードの下にもう少し余白を追加 */
   background-color: #c0c0c0;
