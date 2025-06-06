@@ -40,17 +40,19 @@ const puttingBomb = (bombMap: number[][]) => {
   }
 };
 
-const countAroundBombs = (bombMap: number[][], x: number, y: number) => {
+const countAroundBombs = (bombMap: number[][], y: number, x: number) => {
   let bombCount = 0;
   for (let i = -1; i <= 1; i++) {
     for (let j = -1; j <= 1; j++) {
-      const newY = y + i;
-      const newX = x + j;
-      if (newX < 0 || newY < 0 || newX >= ROWS || newY >= COLS) {
+      if (i === 0 && j === 0) {
         continue;
       }
-      if (bombMap[newY][newX] === 1) {
-        bombCount++;
+      const newY = y + i;
+      const newX = x + j;
+      if (newY >= 0 && newY < ROWS && newX >= 0 && newX < COLS) {
+        if (bombMap[newY][newX] === 1) {
+          bombCount++;
+        }
       }
     }
   }
@@ -98,29 +100,29 @@ export default function Home() {
   const [bombMap] = useState<number[][]>(() => generateRandomBombMap(ROWS, COLS, NUM_BOMBS));
 
   const displayBoard = calcMap(userInputBoard, bombMap);
-  const handleCellClick = (x: number, y: number) => {
-    if (userInputBoard[x][y] === 3 || userInputBoard[x][y] === 1 || userInputBoard[x][y] === 2) {
+  const handleCellClick = (y: number, x: number) => {
+    if (userInputBoard[y][x] === 3 || userInputBoard[y][x] === 1 || userInputBoard[y][x] === 2) {
       return;
     }
 
     const newUserInputBoard = structuredClone(userInputBoard);
-    newUserInputBoard[x][y] = 3;
+    newUserInputBoard[y][x] = 3;
     setUserInputBoard(newUserInputBoard);
   };
   // 右クリック（旗・はてなを切り替える）
-  const handleCellRightClick = (event: React.MouseEvent, x: number, y: number) => {
+  const handleCellRightClick = (event: React.MouseEvent, y: number, x: number) => {
     event.preventDefault();
 
     const newUserInputBoard = structuredClone(userInputBoard);
-    const currentColor = newUserInputBoard[x][y];
+    const currentColor = newUserInputBoard[y][x];
 
     // 0:未開封 -> 1:旗 -> 2:はてな -> 0:未開封
     if (currentColor === 0) {
-      newUserInputBoard[x][y] = 1;
+      newUserInputBoard[y][x] = 1;
     } else if (currentColor === 1) {
-      newUserInputBoard[x][y] = 2;
+      newUserInputBoard[y][x] = 2;
     } else if (currentColor === 2) {
-      newUserInputBoard[x][y] = 0;
+      newUserInputBoard[y][x] = 0;
     }
     setUserInputBoard(newUserInputBoard);
   };
