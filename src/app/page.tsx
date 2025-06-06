@@ -94,6 +94,21 @@ const calcMap = (userInput: number[][], bombMap: number[][]) => {
   }
   return board;
 };
+const directions = [[-1, -1], [0, -1], [1 - 1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
+//連続して開ける処理を行う関数
+const openChain = (y: number, x: number, board: number[][], bombMap: number[][]) => {
+  if (y < 0 || y >= ROWS || x < 0 || x >= COLS || board[y][x] === 3) {
+    return; //盤面の外に出たら終了
+  }
+  if (countAroundBombs(bombMap, y, x) > 0) {
+    board[y][x] = 3;
+    return;
+  }
+  board[y][x] = 3;
+  for (const [dy, dx] of directions) {
+    openChain(y + dy, x + dx, board, bombMap);
+  }
+};
 
 export default function Home() {
   const [userInputBoard, setUserInputBoard] = useState(userInput);
@@ -106,9 +121,10 @@ export default function Home() {
     }
 
     const newUserInputBoard = structuredClone(userInputBoard);
-    newUserInputBoard[y][x] = 3;
+    openChain(y, x, newUserInputBoard, bombMap);
     setUserInputBoard(newUserInputBoard);
   };
+
   // 右クリック（旗・はてなを切り替える）
   const handleCellRightClick = (event: React.MouseEvent, y: number, x: number) => {
     event.preventDefault();
@@ -137,21 +153,21 @@ export default function Home() {
         return '-240px 0px';
       case 3: // 開いたセル
         return '';
-      case 11: // 数字1
+      case 11: // 1
         return '-0px 0px';
-      case 12: // 数字2
+      case 12: // 2
         return '-30px 0px';
-      case 13: // 数字3
+      case 13: // 3
         return '-60px 0px';
-      case 14: // 数字4
+      case 14: // 4
         return '-90px 0px';
-      case 15: // 数字5
+      case 15: // 5
         return '-120px 0px';
-      case 16: // 数字6
+      case 16: // 6
         return '-150px 0px';
-      case 17: // 数字7
+      case 17: // 7
         return '-180px 0px';
-      case 18: // 数字8
+      case 18: // 8
         return '-210px 0px';
       case 99: // 爆弾のマス
         return '-300px 0px';
@@ -166,31 +182,21 @@ export default function Home() {
         {/* displayBoardをレンダリングする */}
         {displayBoard.map((row, rowIndex) => (
           <div key={rowIndex} className={styles.row}>
-            {row.map(
-              (
-                cellValue,
-                colIndex, // cellValueを使う
-              ) => (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  // openedEmpty クラスの適用条件を見直し
-                  // cellValue が 3 (開かれた空のマス) または 4-12 (数字/爆弾マス) の場合に適用
-                  className={`${styles.cell} ${
-                    cellValue === 3 || cellValue >= 10 // ここに || cellValue === 99 を追加
-                      ? styles.openedEmpty
-                      : ''
-                  }`}
-                  style={
-                    // getBackgroundPositionが空文字列を返したらbackgroundPositionを'none'に設定
-                    getBackgroundPosition(cellValue)
-                      ? { backgroundPosition: getBackgroundPosition(cellValue) }
-                      : { backgroundPosition: 'none' } // backgroundPositionを'none'に設定
-                  }
-                  onClick={() => handleCellClick(rowIndex, colIndex)}
-                  onContextMenu={(e) => handleCellRightClick(e, rowIndex, colIndex)} // 右クリックイベントを追加
-                />
-              ),
-            )}
+            {row.map((cellValue, colIndex) => (
+              <div
+                key={`${rowIndex}-${colIndex}`}
+                className={`${styles.cell} ${
+                  cellValue === 3 || cellValue >= 10 ? styles.openedEmpty : ''
+                }`}
+                style={
+                  getBackgroundPosition(cellValue)
+                    ? { backgroundPosition: getBackgroundPosition(cellValue) }
+                    : { backgroundPosition: 'none' } // backgroundPositionを'none'に設定
+                }
+                onClick={() => handleCellClick(rowIndex, colIndex)}
+                onContextMenu={(e) => handleCellRightClick(e, rowIndex, colIndex)} // 右クリックイベントを追加
+              />
+            ))}
           </div>
         ))}
       </div>
