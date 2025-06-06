@@ -6,39 +6,33 @@ import styles from './page.module.css';
 const ROWS = 9; //行のこと
 const COLS = 9; //列のこと
 const NUM_BOMBS = 10; //爆弾の数
+let first = 1;
 
 const userInput: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0) as number[]);
 // 0:何もしない 1:旗 2:はてな 3:開く
 
-const generateRandomBombMap = (rows: number, cols: number, numBombs: number): number[][] => {
+const generateRandomBombMap = (
+  rows: number,
+  cols: number,
+  numBombs: number,
+  firstClickY: number,
+  firstClickX: number,
+): number[][] => {
   const newBombMap: number[][] = Array.from({ length: rows }, () => Array<number>(cols).fill(0));
   let placedBombs = 0;
 
   while (placedBombs < numBombs) {
-    const y = Math.floor(Math.random() * rows); // 行 (y)
-    const x = Math.floor(Math.random() * cols); // 列 (x)
+    const ramY = Math.floor(Math.random() * rows); // 行 (y)
+    const ramX = Math.floor(Math.random() * cols); // 列 (x)
 
-    if (newBombMap[y][x] === 0) {
-      newBombMap[y][x] = 1; // 爆弾を配置
+    if (newBombMap[ramY][ramX] === 0 && (ramY !== firstClickY || ramX !== firstClickX)) {
+      newBombMap[ramY][ramX] = 1; // 爆弾を配置
       placedBombs++;
     }
   }
   return newBombMap;
 };
 //0:何もない 1:爆弾がある
-
-const puttingBomb = (bombMap: number[][]) => {
-  const bombCount = 10;
-  let placedBombs = 0;
-  while (placedBombs < bombCount) {
-    const x = Math.floor(Math.random() * 9);
-    const y = Math.floor(Math.random() * 9);
-    if (bombMap[y][x] === 0) {
-      bombMap[y][x] = 1;
-      placedBombs++;
-    }
-  }
-};
 
 const countAroundBombs = (bombMap: number[][], y: number, x: number) => {
   let bombCount = 0;
@@ -78,9 +72,8 @@ const calcMap = (userInput: number[][], bombMap: number[][]) => {
           row.push(99); // 爆弾
         } else {
           const bombCount = countAroundBombs(bombMap, y, x);
-          // 10を足して未開封の0と区別
           if (bombCount !== 0) {
-            row.push(10 + bombCount);
+            row.push(10 + bombCount); //一の位で分かりやすいように10を足して調整
           } else {
             row.push(3); // 開いた空のマス
           }
@@ -112,10 +105,33 @@ const openChain = (y: number, x: number, board: number[][], bombMap: number[][])
 
 export default function Home() {
   const [userInputBoard, setUserInputBoard] = useState(userInput);
-  const [bombMap] = useState<number[][]>(() => generateRandomBombMap(ROWS, COLS, NUM_BOMBS));
-
+  const [bombMap, setBombMap] = useState<number[][]>([
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  ]);
+  for (const ooo of bombMap) {
+    for (const iii of ooo) {
+      let j = 0;
+      if (iii === 0) {
+        j++;
+        console.log(j);
+      }
+    }
+  }
   const displayBoard = calcMap(userInputBoard, bombMap);
   const handleCellClick = (y: number, x: number) => {
+    if (bombMap[y][x] === 0 && first === 1) {
+      const newG = generateRandomBombMap(ROWS, COLS, NUM_BOMBS, y, x);
+      setBombMap(newG);
+      first = 2;
+    }
     if (userInputBoard[y][x] === 3 || userInputBoard[y][x] === 1 || userInputBoard[y][x] === 2) {
       return;
     }
