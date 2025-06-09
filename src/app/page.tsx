@@ -139,7 +139,7 @@ export default function Home() {
     setGameState('playing');
     setBombMap(null);
     // userInputBoardもまっさらな状態に戻す
-    setUserInputBoard(Array.from({ length: ROWS }, () => Array(COLS).fill(0)));
+    setUserInputBoard(Array.from({ length: ROWS }, () => Array(COLS).fill(0) as number[]));
     setRemainingBombs(NUM_BOMBS);
   };
 
