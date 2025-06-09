@@ -122,6 +122,3 @@
 .cell.openedEmpty[style*='background-position: none'] {
   background-image: none; /* 画像を非表示にする */
 }
-
-.cell.openedEmpty:not([style*='background-position: none']) {
-}
