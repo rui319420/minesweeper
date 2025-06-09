@@ -86,7 +86,6 @@ const calcMap = (userInput: number[][], bombMap: number[][]) => {
   return board;
 };
 const directions = [[-1, -1], [0, -1], [1 - 1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
-//連続して開ける処理を行う関数
 // 連続して開ける処理を行う関数
 const openChain = (y: number, x: number, board: number[][], bombMap: number[][]) => {
   if (y < 0 || y >= ROWS || x < 0 || x >= COLS || board[y][x] === 3 || bombMap[y][x] === 1) {
@@ -106,8 +105,34 @@ export default function Home() {
   const [userInputBoard, setUserInputBoard] = useState(userInput);
   const [bombMap, setBombMap] = useState<number[][] | null>(null);
   const [gameState, setGameState] = useState<'playing' | 'gameover' | 'clear'>('playing');
-  // 表示用の盤面を計算します。
   const displayBoard = calcMap(userInputBoard, bombMap ?? []);
+  const [remainingBombs, setRemainingBombs] = useState(NUM_BOMBS);
+
+  const formatNumber = (num: number) => {
+    return String(num).padStart(3, '0');
+  };
+
+  const getFaceStyle = () => {
+    // gameState の値によって、表示する画像の座標を返す
+    switch (gameState) {
+      case 'gameover':
+        return { backgroundPosition: '-392px -2px' }; // ゲームオーバーの顔 (仮)
+      case 'clear':
+        return { backgroundPosition: '-362px -2px' }; // クリアの顔 (仮)
+      case 'playing':
+      default:
+        return { backgroundPosition: '-332px -2px' }; // 通常の顔 (仮)
+    }
+  };
+  const handleFaceClick = () => {
+    console.log('ゲームをリセットします！');
+    // 全てのstateを初期値に戻す
+    setGameState('playing');
+    setBombMap(null);
+    // userInputBoardもまっさらな状態に戻す
+    setUserInputBoard(Array.from({ length: ROWS }, () => Array(COLS).fill(0)));
+    setRemainingBombs(NUM_BOMBS);
+  };
 
   const handleCellClick = (y: number, x: number) => {
     if (gameState !== 'playing') {
@@ -155,8 +180,10 @@ export default function Home() {
     // 0:未開封 -> 1:旗 -> 2:はてな -> 0:未開封
     if (currentColor === 0) {
       newUserInputBoard[y][x] = 1;
+      setRemainingBombs((prevBombs) => prevBombs - 1);
     } else if (currentColor === 1) {
       newUserInputBoard[y][x] = 2;
+      setRemainingBombs((prevBombs) => prevBombs + 1);
     } else if (currentColor === 2) {
       newUserInputBoard[y][x] = 0;
     }
@@ -196,29 +223,39 @@ export default function Home() {
     }
   };
 
+  // Homeコンポーネントのreturn部分を、以下のように丸ごと入れ替えてください。
   return (
     <div className={styles.container}>
-      <div className={styles.board}>
-        {/* displayBoardをレンダリングする */}
-        {displayBoard.map((row, rowIndex) => (
-          <div key={rowIndex} className={styles.row}>
-            {row.map((cellValue, colIndex) => (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                className={`${styles.cell} ${
-                  cellValue === 3 || cellValue >= 10 ? styles.openedEmpty : ''
-                }`}
-                style={
-                  getBackgroundPosition(cellValue)
-                    ? { backgroundPosition: getBackgroundPosition(cellValue) }
-                    : { backgroundPosition: 'none' } // backgroundPositionを'none'に設定
-                }
-                onClick={() => handleCellClick(rowIndex, colIndex)}
-                onContextMenu={(e) => handleCellRightClick(e, rowIndex, colIndex)} // 右クリックイベントを追加
-              />
-            ))}
-          </div>
-        ))}
+      <div className={styles.backGround}>
+        {/* ★ヘッダー部分★ */}
+        <div className={styles.header}>
+          <div className={styles.counter}>{formatNumber(remainingBombs)}</div>
+          <div className={styles.face} style={getFaceStyle()} onClick={handleFaceClick} />
+          <div className={styles.counter}>000</div>
+        </div>
+
+        {/* ★盤面部分★ */}
+        <div className={styles.board}>
+          {displayBoard.map((row, rowIndex) => (
+            <div key={rowIndex} className={styles.row}>
+              {row.map((cellValue, colIndex) => (
+                <div
+                  key={`${rowIndex}-${colIndex}`}
+                  className={`${styles.cell} ${
+                    cellValue === 3 || cellValue >= 10 ? styles.openedEmpty : ''
+                  }`}
+                  style={
+                    getBackgroundPosition(cellValue)
+                      ? { backgroundPosition: getBackgroundPosition(cellValue) }
+                      : { backgroundPosition: 'none' }
+                  }
+                  onClick={() => handleCellClick(rowIndex, colIndex)}
+                  onContextMenu={(e) => handleCellRightClick(e, rowIndex, colIndex)}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

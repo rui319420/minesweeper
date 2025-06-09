@@ -7,6 +7,60 @@
   padding: 0 0.5rem;
 }
 
+.backGround {
+  display: flex;
+  flex-direction: column; /* ★要素を縦に並べる！ */
+  align-items: center; /* ★横方向の中央揃え！ */
+  padding: 10px;
+  background-color: #c0c0c0;
+  border-top: 3px solid #fff;
+  border-right: 3px solid #808080;
+  border-bottom: 3px solid #808080;
+  border-left: 3px solid #fff;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 270px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-top: 3px solid #808080;
+  border-right: 3px solid #fff;
+  border-bottom: 3px solid #fff;
+  border-left: 3px solid #808080;
+}
+
+.face {
+  display: flex;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  background: url('~/src/assets/images/icons.png') no-repeat;
+  border-top: 2px solid #fff;
+  border-right: 2px solid #808080;
+  border-bottom: 2px solid #808080;
+  border-left: 2px solid #fff;
+  transform: scale(1.5);
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px; /* 幅を確保 */
+  padding: 5px;
+  font-family: monospace; /* デジタル風フォントがなければ、等幅フォントで代用 */
+  font-size: 25px; /* 文字サイズ調整 */
+  font-weight: bold;
+  color: #f00; /* 赤い文字 */
+  background-color: #000; /* 黒い背景 */
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080; /* 窪んだような見た目 */
+  transform: scale(1.3);
+}
+
 .board {
   display: flex;
   flex-wrap: wrap;
@@ -15,8 +69,7 @@
   justify-content: center;
   width: 270px; /* 9 * 30px */
   height: 270px; /* 4 * 30px */
-  margin-top: 20px; /* 必要であれば、ボードの上にもう少し余白を追加 */
-  margin-bottom: 20px; /* 必要であれば、ボードの下にもう少し余白を追加 */
+  margin: 0;
   background-color: #c0c0c0;
   border: 1px solid black;
   border-top-color: #c0c0c0;
@@ -64,24 +117,11 @@
   border-right: 1px solid #fff;
   border-bottom: 1px solid #fff;
   border-left: 1px solid #808080;
-
-  /* background-image: none; /* 空のマスの場合のみこれを適用する */
 }
 
-/* 開かれた「空の」マス (cellValue = 3 の場合) */
-
-/* .cell に .openedEmpty クラスがつき、かつ background-position が 'none' の場合 */
-
-/* JSX側で style={{ backgroundPosition: 'none' }} を渡すことを想定 */
 .cell.openedEmpty[style*='background-position: none'] {
   background-image: none; /* 画像を非表示にする */
 }
 
-/* 開かれた「数字の」マス (background-positionが設定されている場合) */
-
-/* .cell に .openedEmpty クラスがつき、かつ background-position が設定されている場合 */
 .cell.openedEmpty:not([style*='background-position: none']) {
-  /* 数字の画像が表示されるので background-image: none; は不要 */
-
-  /* openedEmpty のボーダーと背景色が適用される */
 }
