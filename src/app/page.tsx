@@ -51,7 +51,7 @@ const countAroundBombs = (bombMap: number[][], y: number, x: number) => {
   return bombCount;
 };
 
-const calcMap = (userInput: number[][], bombMap: number[][]) => {
+const calcMap = (userInput: number[][], bombMap: number[][]): number[][] => {
   const board: number[][] = [];
   for (let y = 0; y < ROWS; y++) {
     const row: number[] = [];
@@ -85,7 +85,16 @@ const calcMap = (userInput: number[][], bombMap: number[][]) => {
   }
   return board;
 };
-const directions = [[-1, -1], [0, -1], [1 - 1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
+const directions = [
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+  [1, 0],
+  [1, 1],
+  [0, 1],
+  [-1, 1],
+  [-1, 0],
+];
 // 連続して開ける処理を行う関数
 const openChain = (y: number, x: number, board: number[][], bombMap: number[][]) => {
   if (y < 0 || y >= ROWS || x < 0 || x >= COLS || board[y][x] === 3 || bombMap[y][x] === 1) {
