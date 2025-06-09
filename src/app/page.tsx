@@ -6,7 +6,6 @@ import styles from './page.module.css';
 const ROWS = 9; //行のこと
 const COLS = 9; //列のこと
 const NUM_BOMBS = 10; //爆弾の数
-let first = 1;
 
 const userInput: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0) as number[]);
 // 0:何もしない 1:旗 2:はてな 3:開く
@@ -24,7 +23,6 @@ const generateRandomBombMap = (
   while (placedBombs < numBombs) {
     const ramY = Math.floor(Math.random() * rows); // 行 (y)
     const ramX = Math.floor(Math.random() * cols); // 列 (x)
-
     if (newBombMap[ramY][ramX] === 0 && (ramY !== firstClickY || ramX !== firstClickX)) {
       newBombMap[ramY][ramX] = 1; // 爆弾を配置
       placedBombs++;
@@ -89,9 +87,10 @@ const calcMap = (userInput: number[][], bombMap: number[][]) => {
 };
 const directions = [[-1, -1], [0, -1], [1 - 1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
 //連続して開ける処理を行う関数
+// 連続して開ける処理を行う関数
 const openChain = (y: number, x: number, board: number[][], bombMap: number[][]) => {
-  if (y < 0 || y >= ROWS || x < 0 || x >= COLS || board[y][x] === 3) {
-    return; //盤面の外に出たら終了
+  if (y < 0 || y >= ROWS || x < 0 || x >= COLS || board[y][x] === 3 || bombMap[y][x] === 1) {
+    return;
   }
   if (countAroundBombs(bombMap, y, x) > 0) {
     board[y][x] = 3;
@@ -105,44 +104,49 @@ const openChain = (y: number, x: number, board: number[][], bombMap: number[][])
 
 export default function Home() {
   const [userInputBoard, setUserInputBoard] = useState(userInput);
-  const [bombMap, setBombMap] = useState<number[][]>([
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-  ]);
-  for (const ooo of bombMap) {
-    for (const iii of ooo) {
-      let j = 0;
-      if (iii === 0) {
-        j++;
-        console.log(j);
-      }
-    }
-  }
-  const displayBoard = calcMap(userInputBoard, bombMap);
+  const [bombMap, setBombMap] = useState<number[][] | null>(null);
+  const [gameState, setGameState] = useState<'playing' | 'gameover' | 'clear'>('playing');
+  // 表示用の盤面を計算します。
+  const displayBoard = calcMap(userInputBoard, bombMap ?? []);
+
   const handleCellClick = (y: number, x: number) => {
-    if (bombMap[y][x] === 0 && first === 1) {
-      const newG = generateRandomBombMap(ROWS, COLS, NUM_BOMBS, y, x);
-      setBombMap(newG);
-      first = 2;
-    }
-    if (userInputBoard[y][x] === 3 || userInputBoard[y][x] === 1 || userInputBoard[y][x] === 2) {
+    if (gameState !== 'playing') {
       return;
     }
-
-    const newUserInputBoard = structuredClone(userInputBoard);
-    openChain(y, x, newUserInputBoard, bombMap);
-    setUserInputBoard(newUserInputBoard);
+    if (bombMap === null) {
+      const newBombMap = generateRandomBombMap(ROWS, COLS, NUM_BOMBS, y, x);
+      setBombMap(newBombMap);
+      const newUserInputBoard = structuredClone(userInput);
+      openChain(y, x, newUserInputBoard, newBombMap);
+      setUserInputBoard(newUserInputBoard);
+    } else {
+      //2回目以降
+      if (userInputBoard[y][x] !== 0) {
+        return;
+      }
+      if (bombMap[y][x] === 1) {
+        setGameState('gameover');
+        const newBoard = structuredClone(userInputBoard);
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            if (bombMap[r][c] === 1) {
+              newBoard[r][c] = 3;
+            }
+          }
+        }
+        setUserInputBoard(newBoard);
+        return;
+      }
+      const newUserInputBoard = structuredClone(userInputBoard);
+      openChain(y, x, newUserInputBoard, bombMap); //ずっと使い続けているbombMapを渡す。
+      setUserInputBoard(newUserInputBoard);
+    }
   };
-
   // 右クリック（旗・はてなを切り替える）
   const handleCellRightClick = (event: React.MouseEvent, y: number, x: number) => {
+    if (gameState !== 'playing') {
+      return;
+    }
     event.preventDefault();
 
     const newUserInputBoard = structuredClone(userInputBoard);
