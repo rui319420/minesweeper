@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 
 const ROWS = 9; //行のこと
@@ -116,6 +116,7 @@ export default function Home() {
   const [gameState, setGameState] = useState<'playing' | 'gameover' | 'clear'>('playing');
   const displayBoard = calcMap(userInputBoard, bombMap ?? []);
   const [remainingBombs, setRemainingBombs] = useState(NUM_BOMBS);
+  const [time, setTime] = useState(0);
 
   const formatNumber = (num: number) => {
     return String(num).padStart(3, '0');
@@ -132,15 +133,6 @@ export default function Home() {
       default:
         return { backgroundPosition: '-332px -2px' }; // 通常の顔 (仮)
     }
-  };
-  const handleFaceClick = () => {
-    console.log('ゲームをリセットします！');
-    // 全てのstateを初期値に戻す
-    setGameState('playing');
-    setBombMap(null);
-    // userInputBoardもまっさらな状態に戻す
-    setUserInputBoard(Array.from({ length: ROWS }, () => Array(COLS).fill(0) as number[]));
-    setRemainingBombs(NUM_BOMBS);
   };
 
   const handleCellClick = (y: number, x: number) => {
@@ -232,7 +224,30 @@ export default function Home() {
     }
   };
 
-  // Homeコンポーネントのreturn部分を、以下のように丸ごと入れ替えてください。
+  const handleFaceClick = () => {
+    console.log('ゲームをリセットします！');
+    // 全てのstateを初期値に戻す
+    setGameState('playing');
+    setBombMap(null);
+    // userInputBoardもまっさらな状態に戻す
+    setUserInputBoard(Array.from({ length: ROWS }, () => Array(COLS).fill(0) as number[]));
+    setRemainingBombs(NUM_BOMBS);
+    setTime(0); // ★この行を追加
+  };
+
+  useEffect(() => {
+    let timerId: NodeJS.Timeout | undefined = undefined;
+
+    if (gameState === 'playing' && bombMap !== null) {
+      timerId = setInterval(() => {
+        setTime((prevTime) => (prevTime < 999 ? prevTime + 1 : 999));
+      }, 1000);
+    }
+    return () => {
+      clearInterval(timerId);
+    };
+  }, [gameState, bombMap]);
+
   return (
     <div className={styles.container}>
       <div className={styles.backGround}>
@@ -240,7 +255,7 @@ export default function Home() {
         <div className={styles.header}>
           <div className={styles.counter}>{formatNumber(remainingBombs)}</div>
           <div className={styles.face} style={getFaceStyle()} onClick={handleFaceClick} />
-          <div className={styles.counter}>000</div>
+          <div className={styles.counter}>{formatNumber(time)}</div>
         </div>
 
         {/* ★盤面部分★ */}
