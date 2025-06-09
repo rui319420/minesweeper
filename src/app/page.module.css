@@ -122,3 +122,21 @@
 .cell.openedEmpty[style*='background-position: none'] {
   background-image: none; /* 画像を非表示にする */
 }
+
+.difficultySelector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.difficultySelector button {
+  padding: 8px 15px;
+  font-size: 16px;
+  cursor: pointer;
+  border: 1px solid #888;
+  border-radius: 5px;
+}
+
+.difficultySelector button:hover {
+  background-color: #e0e0e0;
+}

@@ -3,10 +3,6 @@
 import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 
-const ROWS = 9; //行のこと
-const COLS = 9; //列のこと
-const NUM_BOMBS = 10; //爆弾の数
-
 const userInput: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0) as number[]);
 // 0:何もしない 1:旗 2:はてな 3:開く
 
@@ -32,7 +28,13 @@ const generateRandomBombMap = (
 };
 //0:何もない 1:爆弾がある
 
-const countAroundBombs = (bombMap: number[][], y: number, x: number) => {
+const countAroundBombs = (
+  bombMap: number[][],
+  y: number,
+  x: number,
+  rows: number,
+  cols: number,
+) => {
   let bombCount = 0;
   for (let i = -1; i <= 1; i++) {
     for (let j = -1; j <= 1; j++) {
@@ -41,7 +43,7 @@ const countAroundBombs = (bombMap: number[][], y: number, x: number) => {
       }
       const newY = y + i;
       const newX = x + j;
-      if (newY >= 0 && newY < ROWS && newX >= 0 && newX < COLS) {
+      if (newY >= 0 && newY < rows && newX >= 0 && newX < cols) {
         if (bombMap[newY][newX] === 1) {
           bombCount++;
         }
@@ -51,11 +53,16 @@ const countAroundBombs = (bombMap: number[][], y: number, x: number) => {
   return bombCount;
 };
 
-const calcMap = (userInput: number[][], bombMap: number[][]): number[][] => {
+const calcMap = (
+  userInput: number[][],
+  bombMap: number[][],
+  rows: number,
+  cols: number,
+): number[][] => {
   const board: number[][] = [];
-  for (let y = 0; y < ROWS; y++) {
+  for (let y = 0; y < rows; y++) {
     const row: number[] = [];
-    for (let x = 0; x < COLS; x++) {
+    for (let x = 0; x < cols; x++) {
       const userAction = userInput[y][x];
 
       if (userAction === 1) {
@@ -69,7 +76,7 @@ const calcMap = (userInput: number[][], bombMap: number[][]): number[][] => {
         if (bombMap[y][x] === 1) {
           row.push(99); // 爆弾
         } else {
-          const bombCount = countAroundBombs(bombMap, y, x);
+          const bombCount = countAroundBombs(bombMap, y, x, rows, cols);
           if (bombCount !== 0) {
             row.push(10 + bombCount); //一の位で分かりやすいように10を足して調整
           } else {
@@ -96,27 +103,63 @@ const directions = [
   [-1, 0],
 ];
 // 連続して開ける処理を行う関数
-const openChain = (y: number, x: number, board: number[][], bombMap: number[][]) => {
-  if (y < 0 || y >= ROWS || x < 0 || x >= COLS || board[y][x] === 3 || bombMap[y][x] === 1) {
+const openChain = (
+  y: number,
+  x: number,
+  board: number[][],
+  bombMap: number[][],
+  rows: number,
+  cols: number,
+) => {
+  if (y < 0 || y >= rows || x < 0 || x >= cols || board[y][x] === 3 || bombMap[y][x] === 1) {
     return;
   }
-  if (countAroundBombs(bombMap, y, x) > 0) {
+  if (countAroundBombs(bombMap, y, x, rows, cols) > 0) {
     board[y][x] = 3;
     return;
   }
   board[y][x] = 3;
   for (const [dy, dx] of directions) {
-    openChain(y + dy, x + dx, board, bombMap);
+    openChain(y + dy, x + dx, board, bombMap, rows, cols);
   }
 };
 
 export default function Home() {
-  const [userInputBoard, setUserInputBoard] = useState(userInput);
+  const [userInputBoard, setUserInputBoard] = useState(() =>
+    Array.from({ length: 9 }, () => Array(9).fill(0) as number[]),
+  );
   const [bombMap, setBombMap] = useState<number[][] | null>(null);
   const [gameState, setGameState] = useState<'playing' | 'gameover' | 'clear'>('playing');
-  const displayBoard = calcMap(userInputBoard, bombMap ?? []);
-  const [remainingBombs, setRemainingBombs] = useState(NUM_BOMBS);
   const [time, setTime] = useState(0);
+  const [rows, setRows] = useState(9);
+  const [cols, setCols] = useState(9);
+  const [numBombs, setNumBombs] = useState(10);
+  const [remainingBombs, setRemainingBombs] = useState(numBombs);
+  const displayBoard = calcMap(userInputBoard, bombMap ?? [], rows, cols);
+
+  const DIFFICULTY_LEVELS = {
+    beginner: { rows: 9, cols: 9, bombs: 10 },
+    intermediate: { rows: 16, cols: 16, bombs: 40 },
+    expert: { rows: 16, cols: 30, bombs: 99 },
+  };
+
+  const handleDifficultyChange = (level: keyof typeof DIFFICULTY_LEVELS) => {
+    const newSettings = DIFFICULTY_LEVELS[level];
+
+    // 1. 新しい設定をstateにセット
+    setRows(newSettings.rows);
+    setCols(newSettings.cols);
+    setNumBombs(newSettings.bombs);
+
+    // 2. ゲームの状態をリセット（handleFaceClickとほぼ同じ処理）
+    setGameState('playing');
+    setBombMap(null);
+    setUserInputBoard(
+      Array.from({ length: newSettings.rows }, () => Array(newSettings.cols).fill(0) as number[]),
+    );
+    setTime(0);
+    setRemainingBombs(newSettings.bombs);
+  };
 
   const formatNumber = (num: number) => {
     return String(num).padStart(3, '0');
@@ -140,10 +183,10 @@ export default function Home() {
       return;
     }
     if (bombMap === null) {
-      const newBombMap = generateRandomBombMap(ROWS, COLS, NUM_BOMBS, y, x);
+      const newBombMap = generateRandomBombMap(rows, cols, numBombs, y, x);
       setBombMap(newBombMap);
-      const newUserInputBoard = structuredClone(userInput);
-      openChain(y, x, newUserInputBoard, newBombMap);
+      const newUserInputBoard = structuredClone(userInputBoard);
+      openChain(y, x, newUserInputBoard, newBombMap, rows, cols);
       setUserInputBoard(newUserInputBoard);
     } else {
       //2回目以降
@@ -153,8 +196,8 @@ export default function Home() {
       if (bombMap[y][x] === 1) {
         setGameState('gameover');
         const newBoard = structuredClone(userInputBoard);
-        for (let r = 0; r < ROWS; r++) {
-          for (let c = 0; c < COLS; c++) {
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
             if (bombMap[r][c] === 1) {
               newBoard[r][c] = 3;
             }
@@ -164,7 +207,7 @@ export default function Home() {
         return;
       }
       const newUserInputBoard = structuredClone(userInputBoard);
-      openChain(y, x, newUserInputBoard, bombMap); //ずっと使い続けているbombMapを渡す。
+      openChain(y, x, newUserInputBoard, bombMap, rows, cols); //ずっと使い続けているbombMapを渡す。
       setUserInputBoard(newUserInputBoard);
     }
   };
@@ -229,12 +272,10 @@ export default function Home() {
     // 全てのstateを初期値に戻す
     setGameState('playing');
     setBombMap(null);
-    // userInputBoardもまっさらな状態に戻す
-    setUserInputBoard(Array.from({ length: ROWS }, () => Array(COLS).fill(0) as number[]));
-    setRemainingBombs(NUM_BOMBS);
-    setTime(0); // ★この行を追加
+    setUserInputBoard(Array.from({ length: rows }, () => Array(cols).fill(0) as number[]));
+    setTime(0);
+    setRemainingBombs(numBombs);
   };
-
   useEffect(() => {
     let timerId: NodeJS.Timeout | undefined = undefined;
 
@@ -250,16 +291,25 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
+      <div className={styles.difficultySelector}>
+        <button onClick={() => handleDifficultyChange('beginner')}>初級</button>
+        <button onClick={() => handleDifficultyChange('intermediate')}>中級</button>
+        <button onClick={() => handleDifficultyChange('expert')}>上級</button>
+      </div>
       <div className={styles.backGround}>
         {/* ★ヘッダー部分★ */}
-        <div className={styles.header}>
+        <div className={styles.header} style={{ width: cols * 30 }}>
           <div className={styles.counter}>{formatNumber(remainingBombs)}</div>
           <div className={styles.face} style={getFaceStyle()} onClick={handleFaceClick} />
           <div className={styles.counter}>{formatNumber(time)}</div>
         </div>
-
-        {/* ★盤面部分★ */}
-        <div className={styles.board}>
+        <div
+          className={styles.board}
+          style={{
+            width: cols * 30 + 2, // 1マスの幅を30px + ボーダー分と仮定
+            height: rows * 30 + 2, // 1マスの高さを30px + ボーダー分と仮定
+          }}
+        >
           {displayBoard.map((row, rowIndex) => (
             <div key={rowIndex} className={styles.row}>
               {row.map((cellValue, colIndex) => (
