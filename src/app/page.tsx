@@ -125,16 +125,21 @@ const openChain = (
 };
 
 export default function Home() {
+  // ★★★ ステップ1：stateの定義をすべてここに集める ★★★
+  const [rows, setRows] = useState(9);
+  const [cols, setCols] = useState(9);
+  const [numBombs, setNumBombs] = useState(10);
   const [userInputBoard, setUserInputBoard] = useState(() =>
     Array.from({ length: 9 }, () => Array(9).fill(0) as number[]),
   );
   const [bombMap, setBombMap] = useState<number[][] | null>(null);
   const [gameState, setGameState] = useState<'playing' | 'gameover' | 'clear'>('playing');
+  const [remainingBombs, setRemainingBombs] = useState(10);
   const [time, setTime] = useState(0);
-  const [rows, setRows] = useState(9);
-  const [cols, setCols] = useState(9);
-  const [numBombs, setNumBombs] = useState(10);
-  const [remainingBombs, setRemainingBombs] = useState(numBombs);
+  const [customRows, setCustomRows] = useState(9);
+  const [customCols, setCustomCols] = useState(9);
+  const [customBombs, setCustomBombs] = useState(10);
+
   const displayBoard = calcMap(userInputBoard, bombMap ?? [], rows, cols);
 
   const DIFFICULTY_LEVELS = {
@@ -159,6 +164,31 @@ export default function Home() {
     );
     setTime(0);
     setRemainingBombs(newSettings.bombs);
+  };
+
+  const handleCustomGameStart = () => {
+    const maxBombs = customRows * customCols - 9; // 初手の安全地帯(9マス)を考慮
+    if (customRows < 1 || customCols < 1 || customRows > 100 || customCols > 100) {
+      alert('行と列の値は、100以下にする必要があります。');
+      return; // 処理を中断
+    }
+    if (customBombs < 1 || customBombs > maxBombs) {
+      alert(`爆弾の数は、1以上、${maxBombs}以下にする必要があります。`);
+      return; // 処理を中断
+    }
+    // 1. 新しい設定（カスタム値）をゲーム本体のstateにセット
+    setRows(customRows);
+    setCols(customCols);
+    setNumBombs(customBombs);
+
+    // 2. ゲームの状態をリセット
+    setGameState('playing');
+    setBombMap(null);
+    setUserInputBoard(
+      Array.from({ length: customRows }, () => Array(customCols).fill(0) as number[]),
+    );
+    setTime(0);
+    setRemainingBombs(customBombs);
   };
 
   const formatNumber = (num: number) => {
@@ -291,14 +321,43 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
+      {/* ★設定エリア★ */}
+      <div className={styles.customSettings}>
+        <label>
+          行:
+          <input
+            type="number"
+            value={customRows}
+            onChange={(e) => setCustomRows(Number(e.target.value))}
+          />
+        </label>
+        <label>
+          列:
+          <input
+            type="number"
+            value={customCols}
+            onChange={(e) => setCustomCols(Number(e.target.value))}
+          />
+        </label>
+        <label>
+          爆弾:
+          <input
+            type="number"
+            value={customBombs}
+            onChange={(e) => setCustomBombs(Number(e.target.value))}
+          />
+        </label>
+        <button onClick={handleCustomGameStart}>更新</button>
+      </div>
       <div className={styles.difficultySelector}>
         <button onClick={() => handleDifficultyChange('beginner')}>初級</button>
         <button onClick={() => handleDifficultyChange('intermediate')}>中級</button>
         <button onClick={() => handleDifficultyChange('expert')}>上級</button>
       </div>
+
+      {/* ★ゲームエリア★ */}
       <div className={styles.backGround}>
-        {/* ★ヘッダー部分★ */}
-        <div className={styles.header} style={{ width: cols * 30 }}>
+        <div className={styles.header} style={{ width: cols * 30 + 2 }}>
           <div className={styles.counter}>{formatNumber(remainingBombs)}</div>
           <div className={styles.face} style={getFaceStyle()} onClick={handleFaceClick} />
           <div className={styles.counter}>{formatNumber(time)}</div>
@@ -306,8 +365,8 @@ export default function Home() {
         <div
           className={styles.board}
           style={{
-            width: cols * 30 + 2, // 1マスの幅を30px + ボーダー分と仮定
-            height: rows * 30 + 2, // 1マスの高さを30px + ボーダー分と仮定
+            width: cols * 30 + 2,
+            height: rows * 30 + 2,
           }}
         >
           {displayBoard.map((row, rowIndex) => (
