@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 
-const userInput: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0) as number[]);
 // 0:何もしない 1:旗 2:はてな 3:開く
-
+//三項演算子「条件 ? 満たすとき : 満たさないとき」
 const generateRandomBombMap = (
   rows: number,
   cols: number,
@@ -125,7 +124,6 @@ const openChain = (
 };
 
 export default function Home() {
-  // ★★★ ステップ1：stateの定義をすべてここに集める ★★★
   const [rows, setRows] = useState(9);
   const [cols, setCols] = useState(9);
   const [numBombs, setNumBombs] = useState(10);
@@ -134,13 +132,14 @@ export default function Home() {
   );
   const [bombMap, setBombMap] = useState<number[][] | null>(null);
   const [gameState, setGameState] = useState<'playing' | 'gameover' | 'clear'>('playing');
-  const [remainingBombs, setRemainingBombs] = useState(10);
   const [time, setTime] = useState(0);
   const [customRows, setCustomRows] = useState(9);
   const [customCols, setCustomCols] = useState(9);
   const [customBombs, setCustomBombs] = useState(10);
-
+  const flagcount = userInputBoard.flat().filter((cell) => cell === 1).length;
+  const remainingBombs = numBombs - flagcount;
   const displayBoard = calcMap(userInputBoard, bombMap ?? [], rows, cols);
+  //はてな二つは「Null合体演算子といい、左側が「Null」もしくは「undefund」のときに右を実行する
 
   const DIFFICULTY_LEVELS = {
     beginner: { rows: 9, cols: 9, bombs: 10 },
@@ -150,24 +149,21 @@ export default function Home() {
 
   const handleDifficultyChange = (level: keyof typeof DIFFICULTY_LEVELS) => {
     const newSettings = DIFFICULTY_LEVELS[level];
-
     // 1. 新しい設定をstateにセット
     setRows(newSettings.rows);
     setCols(newSettings.cols);
     setNumBombs(newSettings.bombs);
-
-    // 2. ゲームの状態をリセット（handleFaceClickとほぼ同じ処理）
+    // 2. ゲームの状態をリセットする処理
     setGameState('playing');
     setBombMap(null);
     setUserInputBoard(
       Array.from({ length: newSettings.rows }, () => Array(newSettings.cols).fill(0) as number[]),
     );
     setTime(0);
-    setRemainingBombs(newSettings.bombs);
   };
 
   const handleCustomGameStart = () => {
-    const maxBombs = customRows * customCols - 9; // 初手の安全地帯(9マス)を考慮
+    const maxBombs = customRows * customCols - 9;
     if (customRows < 1 || customCols < 1 || customRows > 100 || customCols > 100) {
       alert('行と列の値は、100以下にする必要があります。');
       return; // 処理を中断
@@ -176,11 +172,9 @@ export default function Home() {
       alert(`爆弾の数は、1以上、${maxBombs}以下にする必要があります。`);
       return; // 処理を中断
     }
-    // 1. 新しい設定（カスタム値）をゲーム本体のstateにセット
     setRows(customRows);
     setCols(customCols);
     setNumBombs(customBombs);
-
     // 2. ゲームの状態をリセット
     setGameState('playing');
     setBombMap(null);
@@ -188,7 +182,6 @@ export default function Home() {
       Array.from({ length: customRows }, () => Array(customCols).fill(0) as number[]),
     );
     setTime(0);
-    setRemainingBombs(customBombs);
   };
 
   const formatNumber = (num: number) => {
@@ -220,6 +213,7 @@ export default function Home() {
       setUserInputBoard(newUserInputBoard);
     } else {
       //2回目以降
+      const newUserInputBoard = structuredClone(userInputBoard);
       if (userInputBoard[y][x] !== 0) {
         return;
       }
@@ -236,7 +230,6 @@ export default function Home() {
         setUserInputBoard(newBoard);
         return;
       }
-      const newUserInputBoard = structuredClone(userInputBoard);
       openChain(y, x, newUserInputBoard, bombMap, rows, cols); //ずっと使い続けているbombMapを渡す。
       setUserInputBoard(newUserInputBoard);
     }
@@ -247,20 +240,18 @@ export default function Home() {
       return;
     }
     event.preventDefault();
-
     const newUserInputBoard = structuredClone(userInputBoard);
     const currentColor = newUserInputBoard[y][x];
 
-    // 0:未開封 -> 1:旗 -> 2:はてな -> 0:未開封
+    // 0:未開封 -> 1:旗 -> 2:はてな -> 0:未開封のサイクル
     if (currentColor === 0) {
       newUserInputBoard[y][x] = 1;
-      setRemainingBombs((prevBombs) => prevBombs - 1);
     } else if (currentColor === 1) {
       newUserInputBoard[y][x] = 2;
-      setRemainingBombs((prevBombs) => prevBombs + 1);
     } else if (currentColor === 2) {
       newUserInputBoard[y][x] = 0;
     }
+
     setUserInputBoard(newUserInputBoard);
   };
   //マスの見た目を決める関数
@@ -298,14 +289,13 @@ export default function Home() {
   };
 
   const handleFaceClick = () => {
-    console.log('ゲームをリセットします！');
     // 全てのstateを初期値に戻す
     setGameState('playing');
     setBombMap(null);
     setUserInputBoard(Array.from({ length: rows }, () => Array(cols).fill(0) as number[]));
     setTime(0);
-    setRemainingBombs(numBombs);
   };
+  //時間の管理
   useEffect(() => {
     let timerId: NodeJS.Timeout | undefined = undefined;
 
@@ -319,9 +309,25 @@ export default function Home() {
     };
   }, [gameState, bombMap]);
 
+  useEffect(() => {
+    if (gameState !== 'playing' || !bombMap) {
+      return;
+    }
+    let count = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (userInputBoard[r][c] !== 3) {
+          count++;
+        }
+      }
+    }
+    if (count === numBombs) {
+      setGameState('clear');
+    }
+  }, [userInputBoard, bombMap, numBombs, rows, cols, gameState]);
+
   return (
     <div className={styles.container}>
-      {/* ★設定エリア★ */}
       <div className={styles.customSettings}>
         <label>
           行:
