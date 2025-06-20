@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import styles from './page.module.css';
-
+//ゲームオーバー時爆弾赤色
+//旗が空白の連鎖で残ってしまう
+//カスタムの爆弾数の設定
 // 0:何もしない 1:旗 2:はてな 3:開く
-//三項演算子「条件 ? 満たすとき : 満たさないとき」
 const generateRandomBombMap = (
   rows: number,
   cols: number,
@@ -163,13 +164,13 @@ export default function Home() {
   };
 
   const handleCustomGameStart = () => {
-    const maxBombs = customRows * customCols - 9;
+    const maxBombs = customRows * customCols - 1;
     if (customRows < 1 || customCols < 1 || customRows > 100 || customCols > 100) {
       alert('行と列の値は、100以下にする必要があります。');
       return; // 処理を中断
     }
-    if (customBombs < 1 || customBombs > maxBombs) {
-      alert(`爆弾の数は、1以上、${maxBombs}以下にする必要があります。`);
+    if (customBombs < 0 || customBombs > maxBombs) {
+      alert(`爆弾の数は、0以上、${maxBombs}以下にする必要があります。`);
       return; // 処理を中断
     }
     setRows(customRows);
