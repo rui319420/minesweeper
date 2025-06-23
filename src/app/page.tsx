@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 //ゲームオーバー時爆弾赤色
 //旗が空白の連鎖で残ってしまう
-//カスタムの爆弾数の設定
 // 0:何もしない 1:旗 2:はてな 3:開く
 const generateRandomBombMap = (
   rows: number,
